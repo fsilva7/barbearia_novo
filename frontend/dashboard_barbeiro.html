@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Barbeiro</title>
+    <link rel="stylesheet" href="style.css">    <style>
+        .painel { margin-top: 24px; }
+        .painel h3 { margin-bottom: 8px; }
+        .painel form, .painel select, .painel input, .painel button { margin-bottom: 10px; }
+        .painel label { display: block; margin-bottom: 4px; }
+        .painel input, .painel select { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #eee; }
+        .painel button { width: 100%; }
+        .painel-lista { margin-top: 12px; }
+        .painel-lista ul { padding-left: 18px; }
+        .painel-flex { display: flex; gap: 16px; flex-wrap: wrap; }
+        .painel-header { display: flex; justify-content: space-between; align-items: center; }
+        .btn-ios { background-color: #007aff; color: white; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; }
+        .btn-ios:hover { background-color: #005bb5; }
+        .btn-logout { background-color: #d00; }
+        .modal-ios { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center; }
+        .modal-content-ios { background-color: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 400px; }
+        .close-modal { float: right; font-size: 24px; cursor: pointer; }
+        
+        /* Estilos para o calendário de agendamentos */
+        .agenda-controles {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 10px;
+        }
+        .data-navegacao {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+        .input-data {
+            flex: 1;
+            max-width: 200px;
+        }
+        .btn-nav {
+            width: 40px !important;
+            padding: 8px 0 !important;
+        }
+        .agenda-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .agendamento-item {
+            background: #f8f8fa;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .agendamento-hora {
+            background: #007aff;
+            color: white;
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-weight: bold;
+            min-width: 70px;
+            text-align: center;
+        }
+        .agendamento-info {
+            flex: 1;
+            padding: 0 15px;
+        }
+        .agendamento-cliente {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .agendamento-servico {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .agendamento-acoes {
+            display: flex;
+            gap: 5px;
+        }        .msg-sem-agendamentos {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            background: #f8f8fa;
+            border-radius: 8px;
+        }
+        .status-pendente { color: #856404; background-color: #fff3cd; padding: 3px 8px; border-radius: 4px; }
+        .status-confirmado { color: #155724; background-color: #d4edda; padding: 3px 8px; border-radius: 4px; }
+        .status-cancelado { color: #721c24; background-color: #f8d7da; padding: 3px 8px; border-radius: 4px; }
+        
+        .loading {
+            text-align: center;
+            padding: 15px;
+            color: #666;
+        }
+          .loading:after {
+            content: "...";
+            animation: loading 1.5s infinite;
+        }
+        
+        @keyframes loading {
+            0% { content: "."; }
+            33% { content: ".."; }
+            66% { content: "..."; }
+        }
+        
+        .filtros-agendamento {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .filtros-agendamento select {
+            padding: 6px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+        
+        .agendamento-hoje {
+            border-left: 4px solid #007aff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Dashboard do Barbeiro</h2>
+        <div class="painel-flex">
+            <div class="painel painel-servicos">
+                <div class="painel-header">
+                    <h3>Serviços</h3>
+                    <button class="btn-ios" id="btnAbrirModalServico">+ Novo Serviço</button>
+                </div>
+                <ul id="listaServicos"></ul>
+            </div>
+            <div class="painel painel-horarios">
+                <div class="painel-header">
+                    <h3>Horários</h3>
+                    <button class="btn-ios" id="btnAbrirModalHorario">+ Novo Horário</button>
+                </div>
+                <ul id="listaHorarios"></ul>
+            </div>
+        </div>        <div class="painel">
+            <h3>Seus Agendamentos</h3>            <div class="agenda-controles">
+                <div class="data-navegacao">
+                    <button class="btn-ios btn-nav" id="btnDataAnterior">&lt;</button>
+                    <input type="date" id="dataAgendamentos" class="input-data">
+                    <button class="btn-ios btn-nav" id="btnDataProxima">&gt;</button>
+                </div>
+                <div>
+                    <button class="btn-ios" id="btnHoje">Hoje</button>
+                    <button class="btn-ios" id="btnAtualizar" title="Atualizar lista"><i>↻</i></button>
+                </div>
+            </div>
+            <div class="filtros-agendamento">
+                <span>Filtrar por status:</span>
+                <select id="filtroStatus">
+                    <option value="todos">Todos</option>
+                    <option value="pendente">Pendente</option>
+                    <option value="confirmado">Confirmado</option>
+                    <option value="cancelado">Cancelado</option>
+                </select>
+            </div>            <div id="agendamentosLista" class="agenda-lista">
+                <!-- Os agendamentos serão inseridos aqui -->
+            </div>
+            <div id="msgSemAgendamentos" class="msg-sem-agendamentos" style="display: none;">
+                <!-- Mensagem dinâmica será inserida aqui -->
+            </div>
+            <div id="ultimaAtualizacao" style="text-align: right; font-size: 0.8em; color: #666; margin-top: 5px;"></div>
+        </div>
+        <div class="painel">
+            <h3>Link para agendamento</h3>
+            <div id="linkGeradoBarbeiro" style="margin-top:8px; text-align:center;"></div>
+            <button id="btnGerarLinkBarbeiro" class="btn-ios" style="width:100%;margin-top:8px;">Gerar link de agendamento</button>
+        </div>
+        <button id="btnLogout" class="btn-ios btn-logout">Sair</button>
+    </div>
+
+    <!-- Modal Serviço -->
+    <div class="modal-ios" id="modalServico">
+        <div class="modal-content-ios">
+            <span class="close-modal" id="fecharModalServico">&times;</span>
+            <h3 id="tituloModalServico">Cadastrar Serviço</h3>
+            <form id="formServico">
+                <label>Nome do serviço</label>
+                <input type="text" id="nomeServico" required>
+                <label>Duração (minutos)</label>
+                <input type="number" id="duracaoServico" min="5" required>
+                <label>Preço (R$)</label>
+                <input type="number" id="precoServico" min="0" step="0.01" required>
+                <button type="submit" class="btn-ios">Salvar</button>
+                <div id="msgServico"></div>
+            </form>
+        </div>
+    </div>
+    <!-- Modal Horário -->
+    <div class="modal-ios" id="modalHorario">
+        <div class="modal-content-ios">
+            <span class="close-modal" id="fecharModalHorario">&times;</span>
+            <h3 id="tituloModalHorario">Horário de Funcionamento</h3>
+            <form id="formHorario">
+                <table style="width:100%;margin-bottom:12px;">
+                    <thead>
+                        <tr><th>Dia</th><th>Início</th><th>Fim</th><th>Fechado</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Segunda</td><td><input type="time" name="inicio_segunda"></td><td><input type="time" name="fim_segunda"></td><td><input type="checkbox" name="fechado_segunda"></td></tr>
+                        <tr><td>Terça</td><td><input type="time" name="inicio_terca"></td><td><input type="time" name="fim_terca"></td><td><input type="checkbox" name="fechado_terca"></td></tr>
+                        <tr><td>Quarta</td><td><input type="time" name="inicio_quarta"></td><td><input type="time" name="fim_quarta"></td><td><input type="checkbox" name="fechado_quarta"></td></tr>
+                        <tr><td>Quinta</td><td><input type="time" name="inicio_quinta"></td><td><input type="time" name="fim_quinta"></td><td><input type="checkbox" name="fechado_quinta"></td></tr>
+                        <tr><td>Sexta</td><td><input type="time" name="inicio_sexta"></td><td><input type="time" name="fim_sexta"></td><td><input type="checkbox" name="fechado_sexta"></td></tr>
+                        <tr><td>Sábado</td><td><input type="time" name="inicio_sabado"></td><td><input type="time" name="fim_sabado"></td><td><input type="checkbox" name="fechado_sabado"></td></tr>
+                        <tr><td>Domingo</td><td><input type="time" name="inicio_domingo"></td><td><input type="time" name="fim_domingo"></td><td><input type="checkbox" name="fechado_domingo"></td></tr>
+                    </tbody>
+                </table>
+                <button type="submit" class="btn-ios">Salvar</button>
+                <div id="msgHorario"></div>
+            </form>
+        </div>
+    </div>    <script>
+        // Atualiza a estrutura da tabela de horários (adiciona coluna 'fechado' se necessário)
+        fetch('../backend/atualizar_tabela_horarios.php')
+            .then(r => r.json())
+            .then(data => console.log(data.mensagem));
+            
+        // Checa se usuário está logado e é barbeiro
+        fetch('../backend/get_usuario_logado.php')
+            .then(r => r.json())
+            .then(user => {
+                if (!user.logado || user.tipo !== 'barbeiro') {
+                    alert('Faça login como barbeiro!');
+                    window.location.href = 'index.html';
+                }
+            });
+            
+        document.getElementById('btnLogout').onclick = function() {
+            fetch('../backend/logout.php')
+                .then(() => window.location.href = 'index.html');
+        };
+
+        // Link de agendamento
+        const btnGerarLink = document.getElementById('btnGerarLinkBarbeiro');
+        btnGerarLink.onclick = function() {
+            fetch('../backend/get_usuario_logado.php')
+                .then(r => r.json())
+                .then(user => {
+                    if (!user.logado) return;
+                    const url = window.location.origin + '/barbeiro/frontend/agendamento.html?barbeiro_id=' + user.id;
+                    document.getElementById('linkGeradoBarbeiro').innerHTML =
+                        `<b>Link para agendamento:</b><br><a href="${url}" target="_blank">${url}</a>`;
+                });
+        };
+    </script><script src="dashboard_barbeiro.js"></script>
+    <script src="agendamentos_dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Agendamentos</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+        .admin-table th, .admin-table td { padding: 8px 6px; border-bottom: 1px solid #eee; text-align: left; }
+        .admin-table th { background: #f7f7fa; color: #222; }
+        .admin-table tr:hover { background: #f0f0f5; }
+        .status-pendente { color: #d99c00; }
+        .status-confirmado { color: #0a0; }
+        .status-cancelado { color: #d00; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Agendamentos</h2>
+        <table class="admin-table" id="tabelaAgendamentos">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Hora</th>
+                    <th>Cliente</th>
+                    <th>Profissional</th>
+                    <th>Serviço</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <div id="msgAdmin"></div>
+        <div id="linkGerado" style="margin-top:24px; text-align:center;"></div>
+        <button id="btnGerarLink" style="width:100%;margin-top:16px;">Gerar link de agendamento para Instagram</button>
+        <button id="btnLogout" style="width:100%;margin-top:16px;background:#d00;">Sair</button>
+    </div>
+    <script>
+    // Checa se usuário está logado e é admin
+    fetch('../backend/get_usuario_logado.php')
+        .then(r => r.json())
+        .then(user => {
+            if (!user.logado || user.tipo !== 'admin') {
+                alert('Acesso restrito ao administrador!');
+                window.location.href = 'index.html';
+            }
+        });
+
+    fetch('../backend/admin_agendamentos.php')
+        .then(r => r.json())
+        .then(ags => {
+            const tbody = document.querySelector('#tabelaAgendamentos tbody');
+            if (ags.length === 0) {
+                document.getElementById('msgAdmin').textContent = 'Nenhum agendamento encontrado.';
+                return;
+            }
+            ags.forEach(a => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${a.data}</td>
+                    <td>${a.hora}</td>
+                    <td>${a.cliente}</td>
+                    <td>${a.profissional}</td>
+                    <td>${a.servico}</td>
+                    <td class="status-${a.status}">${a.status.charAt(0).toUpperCase() + a.status.slice(1)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        });
+    // Geração de link para agendamento
+    document.getElementById('btnGerarLink').onclick = function() {
+        // Para MVP, link fixo para agendamento.html
+        const url = window.location.origin + '/barbeiro/frontend/agendamento.html';
+        document.getElementById('linkGerado').innerHTML =
+            `<b>Link para colocar na bio do Instagram:</b><br><a href="${url}" target="_blank">${url}</a>`;
+    };
+
+    document.getElementById('btnLogout').onclick = function() {
+        fetch('../backend/logout.php')
+            .then(() => window.location.href = 'index.html');
+    };
+    </script>
+</body>
+</html>

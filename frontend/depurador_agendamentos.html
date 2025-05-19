@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Depurador de Agendamentos</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        h1, h2, h3 { color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .form-control { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input, button { padding: 8px; margin-right: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background-color: #007aff; color: white; text-align: left; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        table, th, td { border: 1px solid #ddd; }
+        .resultados { margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Depurador de Agendamentos</h1>
+        <p>Esta ferramenta ajuda a verificar os agendamentos no banco de dados e sua formatação.</p>
+        
+        <div class="form-control">
+            <label for="inputData">Data (YYYY-MM-DD):</label>
+            <input type="date" id="inputData">
+            <button id="btnBuscar" class="btn-ios">Buscar</button>
+            <button id="btnBuscarTodos" class="btn-ios">Ver Todos</button>
+        </div>
+        
+        <div class="resultados" id="resultado">
+            <!-- Os resultados serão mostrados aqui -->
+        </div>
+    </div>
+    <script src="depurador_agendamentos.js"></script>
+</body>
+</html>

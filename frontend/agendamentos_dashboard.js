@@ -1,0 +1,276 @@
+// agendamentos_dashboard.js - Script para gerenciar a funcionalidade de agendamentos no dashboard do barbeiro
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Elementos do DOM
+    const dataAgendamentosInput = document.getElementById('dataAgendamentos');
+    const btnDataAnterior = document.getElementById('btnDataAnterior');
+    const btnDataProxima = document.getElementById('btnDataProxima');
+    const btnHoje = document.getElementById('btnHoje');
+    const btnAtualizar = document.getElementById('btnAtualizar');
+    const filtroStatus = document.getElementById('filtroStatus');
+    const agendamentosLista = document.getElementById('agendamentosLista');
+    const msgSemAgendamentos = document.getElementById('msgSemAgendamentos');
+    const ultimaAtualizacao = document.getElementById('ultimaAtualizacao');
+    
+    // Armazenar os agendamentos carregados
+    let agendamentosAtuais = [];
+    
+    // Inicializar com a data atual
+    const hoje = new Date();
+    const dataFormatada = hoje.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+    dataAgendamentosInput.value = dataFormatada;
+    
+    // Carregar agendamentos ao mudar de data
+    dataAgendamentosInput.addEventListener('change', carregarAgendamentosPorData);
+    
+    // Botões de navegação
+    btnDataAnterior.addEventListener('click', () => {
+        const data = new Date(dataAgendamentosInput.value);
+        data.setDate(data.getDate() - 1);
+        dataAgendamentosInput.value = data.toISOString().split('T')[0];
+        carregarAgendamentosPorData();
+    });
+    
+    btnDataProxima.addEventListener('click', () => {
+        const data = new Date(dataAgendamentosInput.value);
+        data.setDate(data.getDate() + 1);
+        dataAgendamentosInput.value = data.toISOString().split('T')[0];
+        carregarAgendamentosPorData();
+    });
+    
+    btnHoje.addEventListener('click', () => {
+        dataAgendamentosInput.value = dataFormatada;
+        carregarAgendamentosPorData();
+    });
+    btnAtualizar.addEventListener('click', carregarAgendamentosPorData);
+    
+    // Filtrar agendamentos por status
+    filtroStatus.addEventListener('change', filtrarAgendamentos);
+      // Carregar agendamentos iniciais
+    carregarAgendamentosPorData();
+    
+    // Função para carregar agendamentos
+    function carregarAgendamentosPorData() {
+        fetch('../backend/get_usuario_logado.php')
+            .then(r => r.json())
+            .then(user => {
+                if (!user.logado || user.tipo !== 'barbeiro') return;
+                
+                // Garantir que a data está no formato correto (YYYY-MM-DD)
+                const data = dataAgendamentosInput.value;
+                
+                // Log para depuração
+                console.log('Buscando agendamentos para a data:', data);
+                
+                agendamentosLista.innerHTML = '<div class="loading">Carregando agendamentos</div>';
+                  fetch(`../backend/listar_agendamentos_por_data.php?profissional_id=${user.id}&data=${data}`)
+                    .then(r => r.json())
+                    .then(agendamentos => {
+                        // Log para depuração
+                        console.log('Agendamentos recebidos:', agendamentos);
+                        
+                        agendamentosLista.innerHTML = '';
+                          if (agendamentos.length === 0) {                            // Formatar a data para exibição mais amigável
+                            // Adicionando T00:00:00 para garantir que a data seja interpretada no fuso horário local
+                            const dataObj = new Date(`${data}T00:00:00`);
+                            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Sao_Paulo' };
+                            const dataFormatada = dataObj.toLocaleDateString('pt-BR', options);
+                            
+                            // Primeira letra maiúscula
+                            const dataFormatadaCapitalizada = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
+                            
+                            msgSemAgendamentos.textContent = `Nenhum agendamento para ${dataFormatadaCapitalizada}.`;
+                            msgSemAgendamentos.style.display = 'block';
+                            agendamentosLista.style.display = 'none';
+                        } else {
+                            msgSemAgendamentos.style.display = 'none';
+                            agendamentosLista.style.display = 'flex';
+                            
+                            // Ordenar por hora
+                            agendamentos.sort((a, b) => a.hora.localeCompare(b.hora));
+                            
+                            // Armazenar para filtragem
+                            agendamentosAtuais = agendamentos;
+                            
+                            // Aplicar filtro atual
+                            filtrarAgendamentos();
+                        }
+                          // Atualizar timestamp de última atualização
+                        const agora = new Date();
+                        ultimaAtualizacao.textContent = `Última atualização: ${agora.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`;
+                    })                    .catch(error => {
+                        console.error('Erro ao carregar agendamentos:', error);
+                        agendamentosLista.innerHTML = '<div class="msg-erro">Erro ao carregar agendamentos. Tente novamente.</div>';
+                    });
+            });
+    },
+    
+    // Filtrar agendamentos pelo status selecionado
+    function filtrarAgendamentos() {
+        const filtro = filtroStatus.value;
+        agendamentosLista.innerHTML = '';        if (agendamentosAtuais.length === 0) {
+            // Formatar a data para exibição mais amigável
+            // Adicionando T00:00:00 para garantir que a data seja interpretada no fuso horário local
+            const dataObj = new Date(`${dataAgendamentosInput.value}T00:00:00`);
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Sao_Paulo' };
+            const dataFormatada = dataObj.toLocaleDateString('pt-BR', options);
+            
+            // Primeira letra maiúscula
+            const dataFormatadaCapitalizada = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
+            
+            msgSemAgendamentos.textContent = `Nenhum agendamento para ${dataFormatadaCapitalizada}.`;
+            msgSemAgendamentos.style.display = 'block';
+            agendamentosLista.style.display = 'none';
+            return;
+        }
+        
+        const agendamentosFiltrados = filtro === 'todos' 
+            ? agendamentosAtuais 
+            : agendamentosAtuais.filter(ag => ag.status === filtro);        if (agendamentosFiltrados.length === 0) {
+            // Formatar a data para a mensagem
+            // Adicionando T00:00:00 para garantir que a data seja interpretada no fuso horário local
+            const dataObj = new Date(`${dataAgendamentosInput.value}T00:00:00`);
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Sao_Paulo' };
+            const dataFormatada = dataObj.toLocaleDateString('pt-BR', options);
+            const dataFormatadaCapitalizada = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
+            
+            // Texto do filtro para exibição
+            const filtroTexto = filtro.charAt(0).toUpperCase() + filtro.slice(1);
+            
+            msgSemAgendamentos.textContent = `Nenhum agendamento com status "${filtroTexto}" para ${dataFormatadaCapitalizada}.`;
+            msgSemAgendamentos.style.display = 'block';
+            agendamentosLista.style.display = 'none';
+        } else {
+            msgSemAgendamentos.style.display = 'none';
+            agendamentosLista.style.display = 'flex';
+            
+            // Exibir agendamentos filtrados
+            agendamentosFiltrados.forEach(ag => renderAgendamentoItem(ag));
+        }
+    }
+      // Renderiza um item de agendamento
+    function renderAgendamentoItem(ag) {
+        const agendamentoItem = document.createElement('div');
+        agendamentoItem.className = 'agendamento-item';        // Destacar agendamentos de hoje
+        const dataAtual = dataAgendamentosInput.value;
+        
+        // Obtém a data de hoje formatada como YYYY-MM-DD no fuso horário local (Brasil)
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0); // Zera as horas para evitar problemas com fusos horários
+        
+        // Formatar manualmente para garantir formato YYYY-MM-DD
+        const ano = hoje.getFullYear();
+        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+        const dia = String(hoje.getDate()).padStart(2, '0');
+        
+        const dataHoje = `${ano}-${mes}-${dia}`;
+        
+        if (dataAtual === dataHoje) {
+            agendamentoItem.classList.add('agendamento-hoje');
+        }
+        
+        // Formatar a hora (remover segundos)
+        const hora = ag.hora.substring(0, 5);
+        
+        // Criar o elemento para a hora
+        const horaElement = document.createElement('div');
+        horaElement.className = 'agendamento-hora';
+        horaElement.textContent = hora;
+        
+        // Criar o elemento para as informações
+        const infoElement = document.createElement('div');
+        infoElement.className = 'agendamento-info';
+        
+        const clienteElement = document.createElement('div');
+        clienteElement.className = 'agendamento-cliente';
+        clienteElement.textContent = ag.cliente;
+        
+        const servicoElement = document.createElement('div');
+        servicoElement.className = 'agendamento-servico';
+        servicoElement.textContent = `${ag.servico} (${ag.duracao_minutos} min)`;
+        
+        infoElement.appendChild(clienteElement);
+        infoElement.appendChild(servicoElement);
+        
+        // Criar o elemento para o status
+        const statusElement = document.createElement('div');
+        statusElement.className = `status-${ag.status}`;
+        statusElement.textContent = ag.status.charAt(0).toUpperCase() + ag.status.slice(1);
+        
+        // Criar o elemento para as ações
+        const acoesElement = document.createElement('div');
+        acoesElement.className = 'agendamento-acoes';
+        
+        // Criar botão para alternar status (só para não cancelados)
+        if (ag.status !== 'cancelado') {
+            const btnStatus = document.createElement('button');
+            btnStatus.className = 'btn-ios';
+            
+            if (ag.status === 'pendente') {
+                btnStatus.textContent = 'Confirmar';
+                btnStatus.onclick = () => atualizarStatusAgendamento(ag.id, 'confirmado');
+            } else {
+                btnStatus.textContent = 'Pendente';
+                btnStatus.onclick = () => atualizarStatusAgendamento(ag.id, 'pendente');
+            }
+            
+            acoesElement.appendChild(btnStatus);
+        }
+        
+        const btnRemover = document.createElement('button');
+        btnRemover.className = 'btn-ios';
+        btnRemover.textContent = 'Remover';
+        btnRemover.onclick = () => removerAgendamento(ag.id);
+        
+        acoesElement.appendChild(btnRemover);
+        
+        // Adicionar todos os elementos ao item de agendamento
+        agendamentoItem.appendChild(horaElement);
+        agendamentoItem.appendChild(infoElement);
+        agendamentoItem.appendChild(statusElement);
+        agendamentoItem.appendChild(acoesElement);
+        
+        // Adicionar o item à lista
+        agendamentosLista.appendChild(agendamentoItem);
+    }
+    
+    // Remover um agendamento
+    window.removerAgendamento = function(id) {
+        if (!confirm('Remover este agendamento?')) return;
+        
+        fetch('../backend/remover_agendamento.php', {
+            method: 'POST',
+            body: new URLSearchParams({ id })
+        })
+        .then(r => r.json())
+        .then(() => {
+            carregarAgendamentosPorData();
+        })
+        .catch(error => {
+            console.error('Erro ao remover agendamento:', error);
+            alert('Erro ao remover agendamento. Tente novamente.');
+        });
+    };
+      // Atualizar status de um agendamento
+    window.atualizarStatusAgendamento = function(id, status) {
+        const statusTexto = status === 'confirmado' ? 'confirmar' : 'marcar como pendente';
+        if (!confirm(`Deseja ${statusTexto} este agendamento?`)) return;
+        
+        fetch('../backend/atualizar_status_agendamento.php', {
+            method: 'POST',
+            body: new URLSearchParams({ id, status })
+        })
+        .then(r => r.json())
+        .then(resposta => {
+            if (resposta.sucesso) {
+                carregarAgendamentosPorData();
+            } else {
+                alert('Erro ao atualizar status: ' + resposta.mensagem);
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao atualizar status:', error);
+            alert('Erro ao atualizar status. Tente novamente.');
+        });
+    };
+});

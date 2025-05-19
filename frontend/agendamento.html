@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendamento - Barbearia</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <script>
+        // Checa se usuário está logado e é cliente
+        fetch('../backend/get_usuario_logado.php')
+            .then(r => r.json())
+            .then(user => {
+                if (!user.logado || user.tipo !== 'cliente') {
+                    alert('Faça login como cliente!');
+                    window.location.href = 'index.html';
+                } else {
+                    window.cliente_id = user.id;
+                }
+            });
+    </script>
+    <div class="container" id="agendamentoContainer">
+        <div id="stepBoasVindas" class="step">
+            <h2>Olá! Vamos agendar seu horário?</h2>
+            <button id="btnComecar">Começar</button>
+            <span class="voltar" id="voltarParaHome">Voltar para página inicial</span>
+        </div><div id="stepData" class="step hidden">
+            <h2>Escolha a data</h2>
+            <input type="date" id="dataAgendamento">
+            <button id="btnDataProximo">Próximo</button>
+            <span class="voltar" id="voltarData">Voltar</span>
+        </div>
+        <div id="stepServico" class="step hidden">
+            <h2>Escolha o serviço</h2>
+            <select id="selectServico"></select>
+            <button id="btnServicoProximo">Próximo</button>
+            <span class="voltar" id="voltarServico">Voltar</span>
+        </div>
+        <div id="stepProfissional" class="step hidden">
+            <h2>Escolha o profissional</h2>
+            <select id="selectProfissional"></select>
+            <button id="btnProfissionalProximo">Próximo</button>
+            <span class="voltar" id="voltarProfissional">Voltar</span>
+        </div>
+        <div id="stepHorario" class="step hidden">
+            <h2>Escolha o horário</h2>
+            <div id="horariosDisponiveis"></div>
+            <span class="voltar" id="voltarHorario">Voltar</span>
+        </div>
+        <div id="stepConfirmacao" class="step hidden">
+            <h2>Confirmação</h2>
+            <div id="resumoAgendamento"></div>
+            <button id="btnConfirmar">Confirmar Agendamento</button>
+            <span class="voltar" id="voltarConfirmacao">Voltar</span>
+        </div>
+        <div id="msgAgendamento"></div>
+    </div>
+    <script src="agendamento.js"></script>
+</body>
+</html>

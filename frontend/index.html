@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barbearia - Bem-vindo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="welcome">
+            <img src="logo.svg" alt="Logo Barbearia" class="logo">
+            <h1>Bem-vindo à Barbearia</h1>
+            <p>Agende seu horário de forma rápida e fácil!</p>
+            <button id="btnEntrar">Entrar</button>
+            <button id="btnCadastrar">Cadastrar</button>
+        </div>
+        <form id="formLogin" class="hidden">
+            <h2>Login</h2>
+            <input type="email" id="loginEmail" placeholder="E-mail" required>
+            <input type="password" id="loginSenha" placeholder="Senha" required>
+            <button type="submit">Entrar</button>
+            <span class="voltar" id="voltarLogin">Voltar</span>
+            <div id="loginMsg"></div>
+        </form>
+        <form id="formCadastro" class="hidden">
+            <h2>Cadastro</h2>
+            <input type="text" id="cadNome" placeholder="Nome" required>
+            <input type="email" id="cadEmail" placeholder="E-mail" required>
+            <input type="password" id="cadSenha" placeholder="Senha" required>
+            <select id="cadTipo" required>
+                <option value="">Tipo de usuário</option>
+                <option value="cliente">Cliente</option>
+                <option value="barbeiro">Barbeiro</option>
+            </select>
+            <button type="submit">Cadastrar</button>
+            <span class="voltar" id="voltarCadastro">Voltar</span>
+            <div id="cadMsg"></div>
+        </form>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
